@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#fbf3e8">
+<title>Para Mily</title>
+<meta name="description" content="Una carta para Mily.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 88 C20 66 6 50 6 32 C6 18 17 8 30 8 C39 8 46 13 50 21 C54 13 61 8 70 8 C83 8 94 18 94 32 C94 50 80 66 50 88Z' fill='%23d4566f'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #fbf3e8;
+    --paper-deep: #f4e6d4;
+    --card: #fffaf2;
+    --ink: #3a2d28;
+    --ink-soft: #85726a;
+    --rose: #cf5670;
+    --rose-deep: #b8435d;
+    --rose-soft: #f1c3cc;
+    --line: #1d1816;
+    --doghouse: #c8453c;
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background:
+      radial-gradient(120% 80% at 50% 0%, #fff8ef 0%, transparent 60%),
+      radial-gradient(90% 60% at 50% 110%, #f6e2d6 0%, transparent 70%),
+      var(--paper);
+    color: var(--ink);
+    font-family: "Cormorant Garamond", Georgia, serif;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* grano de papel */
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    pointer-events: none;
+    opacity: .35;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .33 0 0 0 0 .25 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    z-index: 0;
+  }
+
+  /* ---------- corazones de fondo ---------- */
+  .hearts { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
+  .hearts svg {
+    position: absolute; bottom: -30px;
+    animation: rise linear forwards;
+  }
+  @keyframes rise {
+    0%   { transform: translate(0, 0) rotate(-8deg); opacity: 0; }
+    12%  { opacity: var(--o); }
+    50%  { transform: translate(var(--dx), -55vh) rotate(8deg); }
+    85%  { opacity: var(--o); }
+    100% { transform: translate(0, -112vh) rotate(-6deg); opacity: 0; }
+  }
+
+  /* ---------- botón de música ---------- */
+  .music {
+    position: fixed; z-index: 20;
+    top: calc(14px + env(safe-area-inset-top)); right: 14px;
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 1.5px solid rgba(58,45,40,.18);
+    background: rgba(255,250,242,.8);
+    backdrop-filter: blur(6px);
+    color: var(--ink-soft);
+    display: grid; place-items: center;
+    cursor: pointer;
+    transition: transform 160ms var(--ease-out), color 200ms, border-color 200ms;
+  }
+  .music:active { transform: scale(.94); }
+  .music[aria-pressed="true"] { color: var(--rose); border-color: rgba(207,86,112,.45); }
+  .music .slash { transition: opacity 200ms; }
+  .music[aria-pressed="true"] .slash { opacity: 0; }
+
+  /* ---------- progreso ---------- */
+  .progress {
+    position: fixed; z-index: 20;
+    top: calc(28px + env(safe-area-inset-top)); left: 50%;
+    transform: translateX(-50%);
+    display: flex; gap: 7px;
+    transition: opacity 600ms;
+  }
+  .progress.hidden { opacity: 0; }
+  .progress i {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: rgba(58,45,40,.14);
+    transition: background 500ms, transform 500ms var(--ease-out);
+  }
+  .progress i.on { background: var(--rose); }
+  .progress i.now { transform: scale(1.35); }
+
+  /* ---------- escenas ---------- */
+  .scene {
+    position: fixed; inset: 0; z-index: 5;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: calc(64px + env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom));
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(6px);
+    transition: opacity 900ms var(--ease-out), transform 900ms var(--ease-out), filter 900ms var(--ease-out);
+  }
+  .scene.active { opacity: 1; transform: none; filter: none; }
+  .scene.leaving {
+    opacity: 0; transform: translateY(-10px); filter: blur(6px);
+    transition-duration: 650ms; transition-timing-function: ease-in;
+    pointer-events: none;
+  }
+
+  .stage { width: min(250px, 60vw, 34vh); aspect-ratio: 240 / 250; position: relative; }
+  .stage svg { width: 100%; height: 100%; overflow: visible; display: block; }
+
+  .msg {
+    font-family: "Caveat", cursive;
+    font-weight: 600;
+    font-size: clamp(2rem, 7.4vw, 3.2rem);
+    line-height: 1.12;
+    text-align: center;
+    max-width: 17ch;
+    margin: 22px 0 0;
+    min-height: 2.3em;
+    text-wrap: balance;
+  }
+  .msg .w {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(3px);
+    animation: wordIn 800ms var(--ease-out) forwards;
+  }
+  @keyframes wordIn { to { opacity: 1; transform: none; filter: none; } }
+
+  .btn {
+    margin-top: 30px;
+    font-family: "Caveat", cursive;
+    font-weight: 700;
+    font-size: 1.65rem;
+    line-height: 1;
+    color: #fff;
+    background: var(--rose);
+    border: 0;
+    border-radius: 999px;
+    padding: 12px 28px 14px;
+    cursor: pointer;
+    box-shadow: 0 1px 0 rgba(255,255,255,.35) inset, 0 8px 22px -10px rgba(184,67,93,.65);
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: opacity 600ms var(--ease-out), transform 600ms var(--ease-out), background 200ms;
+  }
+  .btn.show { opacity: 1; transform: none; pointer-events: auto; }
+  .btn:active { transform: scale(.97); transition-duration: 120ms; }
+  @media (hover: hover) and (pointer: fine) { .btn:hover { background: var(--rose-deep); } }
+  .btn:focus-visible, .music:focus-visible { outline: 2px solid var(--rose); outline-offset: 3px; }
+
+  /* entradas de Snoopy */
+  .enter-walk { animation: walkIn 1500ms var(--ease-out) both; }
+  @keyframes walkIn {
+    0%   { transform: translate(-44px, 0); opacity: 0; }
+    15%  { transform: translate(-36px, -5px); opacity: 1; }
+    30%  { transform: translate(-27px, 0); }
+    45%  { transform: translate(-18px, -5px); }
+    60%  { transform: translate(-10px, 0); }
+    75%  { transform: translate(-4px, -3px); }
+    100% { transform: translate(0, 0); }
+  }
+  .enter-pop { animation: popIn 900ms var(--ease-out) both; }
+  @keyframes popIn { from { transform: scale(.92) translateY(10px); opacity: 0; } }
+  .enter-rise { animation: riseIn 1200ms var(--ease-out) both; }
+  @keyframes riseIn { from { transform: translateY(24px); opacity: 0; } }
+
+  /* ---------- animaciones del personaje ---------- */
+  .sn-breathe { animation: breathe 4.2s ease-in-out infinite; transform-origin: 112px 226px; }
+  @keyframes breathe { 50% { transform: scale(1.012, 1.02); } }
+  .sn-head { transform-origin: 104px 110px; animation: headIdle 6s ease-in-out infinite; }
+  @keyframes headIdle { 50% { transform: rotate(-2deg); } }
+  .look-down .sn-head { animation: lookDown 6s ease-in-out infinite; }
+  @keyframes lookDown { 0%,100% { transform: rotate(7deg); } 50% { transform: rotate(4deg); } }
+  .look-up .sn-head { animation: lookUp 6s ease-in-out infinite; }
+  @keyframes lookUp { 0%,100% { transform: rotate(-9deg); } 50% { transform: rotate(-6deg); } }
+  .sn-ear { transform-origin: 90px 32px; animation: ear 5s ease-in-out infinite; }
+  @keyframes ear { 50% { transform: rotate(5deg); } }
+  .sn-eye { transform-origin: 131px 58px; animation: blink 5.5s infinite; }
+  @keyframes blink { 0%, 93%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.1); } }
+  .sn-tail { transform-origin: 72px 190px; animation: wag 2.4s ease-in-out infinite; }
+  @keyframes wag { 50% { transform: rotate(-16deg); } }
+  .bob { animation: bob 3.6s ease-in-out infinite; }
+  @keyframes bob { 50% { transform: translateY(-5px); } }
+  .beat { transform-box: fill-box; transform-origin: center; animation: beat 2.4s ease-in-out infinite; }
+  @keyframes beat { 0%, 60%, 100% { transform: scale(1); } 20% { transform: scale(1.07); } 35% { transform: scale(.98); } 45% { transform: scale(1.04); } }
+  .snow { animation: snow linear infinite; }
+  @keyframes snow { from { transform: translate(0, -20px); opacity: 0; } 15% { opacity: .9; } to { transform: translate(-14px, 250px); opacity: 0; } }
+  .hand { transform-origin: 206px 206px; animation: spin 7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .ws-fly { animation: flyLoop 7s ease-in-out infinite; }
+  @keyframes flyLoop {
+    0%, 100% { transform: translate(0, 0); }
+    25% { transform: translate(-16px, -8px); }
+    50% { transform: translate(-6px, 6px); }
+    75% { transform: translate(10px, -4px); }
+  }
+  .ws-wing { transform-box: fill-box; transform-origin: 80% 20%; animation: flap .35s ease-in-out infinite alternate; }
+  @keyframes flap { to { transform: rotate(-38deg); } }
+  .zz { animation: zz 4s ease-in-out infinite; }
+  @keyframes zz { 0% { transform: translate(0, 6px); opacity: 0; } 30%, 60% { opacity: .9; } 100% { transform: translate(8px, -16px); opacity: 0; } }
+  .qm { animation: bob 3s ease-in-out infinite; }
+  .glow { animation: glow 3.6s ease-in-out infinite; transform-origin: 120px 125px; }
+  @keyframes glow { 0%, 100% { opacity: .09; } 50% { transform: scale(1.06); opacity: .16; } }
+
+  /* ---------- sobre ---------- */
+  .envelope-wrap { position: relative; width: min(300px, 76vw); aspect-ratio: 3 / 2; perspective: 900px; margin-top: 6px; }
+  .env-back, .env-front, .env-flap, .env-paper { position: absolute; left: 0; right: 0; }
+  .env-back { inset: 0; background: #efd6cf; border-radius: 6px; box-shadow: 0 18px 40px -22px rgba(90,50,40,.55); }
+  .env-paper {
+    left: 7%; right: 7%; top: 8%; height: 84%;
+    background: var(--card);
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(90,50,40,.12);
+    transition: transform 1100ms var(--ease-out) 500ms;
+    display: grid; place-items: center;
+  }
+  .env-paper span { font-family: "Caveat", cursive; font-size: 1.7rem; color: var(--rose); }
+  .env-front {
+    inset: 0; border-radius: 6px;
+    background:
+      linear-gradient(to top right, #f6e1da 50%, transparent 50.4%) left bottom / 50.2% 100% no-repeat,
+      linear-gradient(to top left, #f3dbd3 50%, transparent 50.4%) right bottom / 50.2% 100% no-repeat;
+    z-index: 2;
+  }
+  .env-flap {
+    top: 0; height: 58%;
+    background: #ecd0c8;
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    transform-origin: top center;
+    z-index: 3;
+    transition: transform 900ms var(--ease-in-out), z-index 0s 450ms;
+  }
+  .env-seal {
+    position: absolute; left: 50%; top: 58%; z-index: 4;
+    width: 38px; height: 38px; margin: -19px 0 0 -19px;
+    transition: opacity 400ms, transform 400ms var(--ease-out);
+  }
+  .envelope-wrap.open .env-flap { transform: rotateX(180deg); z-index: 0; }
+  .envelope-wrap.open .env-seal { opacity: 0; transform: scale(.6); }
+  .envelope-wrap.open .env-paper { transform: translateY(-46%); }
+
+  /* ---------- carta ---------- */
+  .scene.letter-scene { justify-content: flex-start; padding: 0; }
+  .letter-scroll {
+    width: 100%; height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding: calc(70px + env(safe-area-inset-top)) 16px calc(60px + env(safe-area-inset-bottom));
+  }
+  .letter {
+    position: relative;
+    max-width: 620px; margin: 0 auto;
+    background: var(--card);
+    border-radius: 6px;
+    padding: 36px clamp(22px, 6vw, 58px) 44px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.8) inset,
+      0 30px 60px -38px rgba(90,50,40,.55),
+      0 2px 6px rgba(90,50,40,.06);
+  }
+  .letter::before {
+    /* margen rosado como papel de carta */
+    content: ""; position: absolute; top: 0; bottom: 0; left: clamp(12px, 3.4vw, 32px);
+    width: 1px; background: rgba(207,86,112,.25);
+  }
+  .letter .top { width: 150px; margin: -8px auto 12px; }
+  .letter p {
+    font-size: clamp(1.18rem, 4.3vw, 1.36rem);
+    line-height: 1.62;
+    font-weight: 500;
+    margin: 0 0 1.05em;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 900ms var(--ease-out), transform 900ms var(--ease-out);
+  }
+  .letter p.seen { opacity: 1; transform: none; }
+  .letter p:first-of-type::first-letter {
+    font-style: italic; font-weight: 600; font-size: 3.4em; float: left;
+    line-height: .78; padding: 7px 8px 0 0; color: var(--rose);
+  }
+  .letter p.sign {
+    font-family: "Caveat", cursive; font-weight: 600;
+    font-size: clamp(1.7rem, 6vw, 2.1rem); line-height: 1.25;
+    margin: 0 0 .3em; text-align: right;
+  }
+  .letter p.sign.first { margin-top: 1.4em; }
+  .letter .end { display: flex; flex-direction: column; align-items: center; margin-top: 26px; }
+  .letter .end .mini { width: 120px; }
+  .letter .btn { margin-top: 14px; }
+  .scroll-hint {
+    position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); z-index: 6;
+    transform: translateX(-50%);
+    color: var(--ink-soft); opacity: .7;
+    animation: hint 2.2s ease-in-out infinite;
+    transition: opacity 500ms;
+    pointer-events: none;
+  }
+  .scroll-hint.gone { opacity: 0; animation: none; }
+  @keyframes hint { 50% { transform: translate(-50%, 6px); } }
+
+  /* ---------- final ---------- */
+  .final-name {
+    font-family: "Caveat", cursive; font-weight: 700;
+    font-size: clamp(4.4rem, 20vw, 7.5rem);
+    line-height: .9;
+    margin: 14px 0 0;
+    opacity: 0; animation: wordIn 1400ms var(--ease-out) 900ms forwards;
+    transform: translateY(8px); filter: blur(4px);
+  }
+  .final-heart { font-size: .55em; vertical-align: .18em; }
+  .final-sub {
+    font-size: clamp(1.55rem, 6vw, 2rem);
+    font-style: italic; font-weight: 500;
+    margin: 14px 0 0; color: var(--ink);
+    text-align: center;
+    opacity: 0; animation: wordIn 1400ms var(--ease-out) 1900ms forwards;
+    transform: translateY(8px); filter: blur(4px);
+  }
+
+  .intro-msg { font-size: clamp(2.2rem, 8vw, 3.4rem); }
+
+  @media (max-height: 620px) {
+    .stage { width: min(200px, 50vw, 30vh); }
+    .msg { margin-top: 14px; }
+    .btn { margin-top: 20px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 200ms !important; }
+    .scene { transform: none !important; filter: none !important; }
+    .hearts { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hearts" id="hearts" aria-hidden="true"></div>
+
+<button class="music" id="music" aria-pressed="false" aria-label="Activar música">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>
+    <path class="slash" d="M3 3l18 18"/>
+  </svg>
+</button>
+
+<div class="progress hidden" id="progress" aria-hidden="true"></div>
+
+<main id="app"></main>
+
+<script>
+/* =========================================================
+   Textos (tal cual fueron escritos)
+   ========================================================= */
+const MESSAGES = [
+  { t: "Te has vuelto muy fría conmigo.",                               pose: "cold" },
+  { t: "Me contestas cada tantas horas.",                               pose: "clock" },
+  { t: "Lo niegas, pero tu actitud dice otra cosa.",                    pose: "question" },
+  { t: "Sé que estás pasando por momentos de estrés.",                  pose: "woodstock" },
+  { t: "Y quisiera apoyarte, pero siento que soy una carga para ti.",   pose: "doghouse" },
+  { t: "Te amo demasiado.",                                             pose: "hug" },
+  { t: "Eres la chica perfecta para mí.",                               pose: "sign" },
+  { t: "La única que quiero en mi vida.",                               pose: "friend" },
+  { t: "Por eso he querido escribirte esto.",                           pose: "envelope" },
+];
+
+const LETTER = [
+  "Mily, te amo con todo mi ser, y a pesar de todo lo que hemos pasado juntos, tantas cosas difíciles, yo he permanecido a tu lado porque te amo y no puedo imaginar una vida sin ti.",
+  "Perdóname si en su momento no lo valoré o si soy demasiado intenso ahora y ya te aburriste de mí, pero te juro que ahora lo único que hago es tratar de construir un futuro con la principal motivación de que tú estés siempre a mi lado.",
+  "Eres mi bebé hermosa y mi leoncita bella.",
+  "Jamás quiero separarme de ti aunque todo esté en nuestra contra. Quiero casarme contigo y poder decir que Milagros Zamudio es mi esposa, pero no quiero nada de eso si es que tú no lo quieres también.",
+  "La forma en la que me has tratado y el poco interés que has tenido en mí durante estos días me tiene tan confundido. Solo espero que sea una etapa y no sea pérdida genuina de amor o interés.",
+  "Te prometo que te quiero hacer la mujer más feliz del mundo. Solo te necesito a ti y tus dulces besos y abrazos a mi lado.",
+  "Te extraño tanto, mi amor. Perdóname si no te supe hacer feliz cuando debí, pero créeme que hacerlo ahora es lo que más anhelo.",
+  "Irnos de viaje juntos, alquilar un departamento e irnos a vivir de manera espontánea, todo lo que te puedas imaginar...",
+  "Tengo tantos planes para nosotros y de verdad muero por cumplirlos.",
+  "Te amo, mi niña hermosa. Espero poder llegar a tu corazón, y si no, y de verdad quieres terminar esto, solo espero que me lo digas y tendré que aprender a aceptarlo con mucho dolor.",
+];
+const SIGN = ["Besos, mi bebé bella.", "Te amo, y siempre te amaré."];
+
+/* =========================================================
+   Snoopy (SVG dibujado a mano, estilo Peanuts)
+   ========================================================= */
+const INK = "#1d1816";
+const S = `stroke="${INK}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"`;
+const S2 = `stroke="${INK}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"`;
+const ROSE = "#d4566f";
+
+const heartPath = (cx, cy, s) => {
+  // corazón centrado en (cx, cy) con ancho ~2s
+  const k = s / 20;
+  const p = (x, y) => `${(cx + x * k).toFixed(1)} ${(cy + y * k).toFixed(1)}`;
+  return `M${p(0, 18)} C${p(-10, 11)} ${p(-20, 4)} ${p(-20, -5)} C${p(-20, -13)} ${p(-14, -18)} ${p(-8, -18)} C${p(-4, -18)} ${p(-1, -16)} ${p(0, -12)} C${p(1, -16)} ${p(4, -18)} ${p(8, -18)} C${p(14, -18)} ${p(20, -13)} ${p(20, -5)} C${p(20, 4)} ${p(10, 11)} ${p(0, 18)} Z`;
+};
+const heart = (cx, cy, s, cls = "") =>
+  `<path class="${cls}" d="${heartPath(cx, cy, s)}" fill="${ROSE}" ${S}/>`;
+
+function head(mouth = "smile") {
+  const mouths = {
+    smile: `<path d="M128 92 C140 99 154 98 162 91" fill="none" ${S}/>`,
+    flat:  `<path d="M134 94 C144 96 152 95 158 92" fill="none" ${S}/>`,
+    sad:   `<path d="M134 96 C142 91 152 91 158 95" fill="none" ${S}/>`,
+  };
+  return `
+  <g transform="translate(104 110) scale(1.1) translate(-104 -110)"><g class="sn-head">
+    <path d="M62 92 C47 60 60 26 98 23 C124 21 139 36 149 48 C159 58 174 55 185 62 C197 70 194 92 175 96 C152 101 133 98 119 106 C104 115 76 113 62 92 Z" fill="#fff" ${S}/>
+    ${mouths[mouth]}
+    <ellipse cx="187" cy="67" rx="9.5" ry="7.5" fill="${INK}"/>
+    <g class="sn-eye"><ellipse cx="131" cy="58" rx="3.2" ry="6" fill="${INK}"/></g>
+    <path class="sn-ear" d="M88 29 C66 33 51 62 54 90 C56 107 72 113 81 100 C92 84 98 56 96 36 C95 31 92 29 88 29 Z" fill="${INK}" ${S}/>
+  </g></g>`;
+}
+
+function body() {
+  return `
+    <path class="sn-tail" d="M74 190 C60 190 52 182 54 172 C55 168 60 168 61 172 C62 178 67 181 74 181" fill="#fff" ${S}/>
+    <ellipse cx="104" cy="226" rx="24" ry="8.5" fill="#fff" ${S}/>
+    <path d="M84 110 C66 136 58 176 66 204 C72 219 92 225 116 225 C142 225 158 218 162 200 C166 174 156 138 130 110 Z" fill="#fff" ${S}/>
+    <path d="M112 198 C114 208 114 216 112 222" fill="none" ${S2}/>
+    <ellipse cx="160" cy="223" rx="27" ry="9" fill="#fff" ${S}/>`;
+}
+
+const armRest = `<path d="M124 134 C140 142 150 156 147 170 C145 177 136 177 134 171 C136 160 132 150 122 144" fill="#fff" ${S}/>`;
+const paw = (x, y) => `<ellipse cx="${x}" cy="${y}" rx="8" ry="6.5" fill="#fff" ${S}/>`;
+
+function woodstock(x, y, sc = 1, fly = false) {
+  return `
+  <g transform="translate(${x} ${y}) scale(${sc})">
+    <g class="${fly ? "ws-fly" : "bob"}">
+      <path d="M-13 6 C-16 -6 -8 -15 2 -15 C11 -15 15 -8 14 -1 C13 8 6 13 -3 13 C-8 13 -12 10 -13 6 Z" fill="#f4c542" ${S2}/>
+      <path d="M-1 -15 L-5 -24 M2 -15 L2 -25 M5 -14 L10 -22" fill="none" ${S2}/>
+      <path d="M13 -5 L20 -3 L13 0" fill="#f4c542" ${S2}/>
+      <path d="M6 -8 L6 -4" ${S2}/>
+      <path class="ws-wing" d="M-6 1 C-13 -3 -17 2 -14 7 C-11 9 -7 7 -5 4" fill="#f4c542" ${S2}/>
+      ${fly ? "" : `<path d="M-2 13 L-3 18 M4 13 L5 18" ${S2}/>`}
+    </g>
+  </g>`;
+}
+
+function sitting({ arm = armRest, mouth = "smile", extraBack = "", extraFront = "", look = "" } = {}) {
+  return `<svg viewBox="0 0 240 250" class="${look}" role="img" aria-label="Snoopy">
+    ${extraBack}
+    <g class="sn-breathe">
+      ${body()}
+      ${head(mouth)}
+      ${arm}
+    </g>
+    ${extraFront}
+  </svg>`;
+}
+
+const POSES = {
+  intro() {
+    // Snoopy con un globo de corazón
+    return sitting({
+      look: "look-up",
+      extraBack: `<g class="bob"><path d="M220 50 C222 100 196 140 150 160" fill="none" stroke="${INK}" stroke-width="1.6"/>${heart(222, 24, 22, "beat")}</g>`,
+      arm: `<path d="M124 134 C136 142 144 152 148 160" fill="none" ${S}/>${paw(150, 161)}`,
+    });
+  },
+  cold() {
+    let flakes = "";
+    const xs = [20, 62, 110, 168, 210, 38, 190, 140];
+    xs.forEach((x, i) => {
+      flakes += `<g class="snow" style="animation-duration:${6 + (i % 3) * 1.6}s;animation-delay:${-i * 1.1}s"><circle cx="${x}" cy="0" r="${2 + (i % 2)}" fill="#b9c9d6"/></g>`;
+    });
+    return sitting({
+      mouth: "flat",
+      look: "look-down",
+      extraBack: flakes,
+      extraFront: `
+        <path d="M84 110 C98 122 118 122 134 110" fill="none" stroke="#c8453c" stroke-width="11" stroke-linecap="round"/>
+        <path d="M92 116 L86 146 L100 143 L101 118 Z" fill="#c8453c" ${S2}/>
+        <path d="M88 132 L99 130 M87 139 L99 137" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".7"/>`,
+    });
+  },
+  clock() {
+    return sitting({
+      mouth: "flat",
+      look: "look-down",
+      extraFront: `
+        <g transform="translate(0 0)">
+          <path d="M190 190 L186 184 M222 190 L226 184" ${S2}/>
+          <circle cx="206" cy="206" r="20" fill="#fff" ${S}/>
+          <circle cx="206" cy="206" r="2.5" fill="${INK}"/>
+          <path d="M206 206 L206 194" ${S2}/>
+          <g class="hand"><path d="M206 206 L217 206" ${S2}/></g>
+          <path d="M194 227 L190 232 M218 227 L222 232" ${S2}/>
+          <circle cx="193" cy="186" r="5" fill="#fff" ${S2}/><circle cx="219" cy="186" r="5" fill="#fff" ${S2}/>
+        </g>`,
+    });
+  },
+  question() {
+    return sitting({
+      mouth: "flat",
+      extraBack: `<text class="qm" x="206" y="40" font-family="Caveat, cursive" font-size="54" font-weight="700" fill="${ROSE}">?</text>`,
+    });
+  },
+  woodstock() {
+    return sitting({
+      mouth: "flat",
+      look: "look-up",
+      extraBack: woodstock(206, 24, 1.1, true),
+    });
+  },
+  doghouse() {
+    return `<svg viewBox="0 0 240 250" role="img" aria-label="Snoopy acostado sobre su casita">
+      <!-- casita -->
+      <path d="M48 152 L48 246 L192 246 L192 152" fill="#c8453c" ${S}/>
+      <path d="M96 246 L96 206 C96 186 144 186 144 206 L144 246" fill="#2b1f1c" ${S}/>
+      <path d="M22 166 L120 110 L218 166" fill="none" stroke="${INK}" stroke-width="14" stroke-linejoin="round" stroke-linecap="round"/>
+      <path d="M22 166 L120 110 L218 166" fill="none" stroke="#c8453c" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
+      <path d="M48 160 L120 118 L192 160 Z" fill="#c8453c"/>
+      <!-- Snoopy boca arriba en el techo -->
+      <g class="sn-breathe" style="transform-origin:120px 110px">
+        <path d="M70 112 C70 88 100 78 128 80 C156 82 176 92 174 110 C172 122 150 124 124 122 C98 120 70 124 70 112 Z" fill="#fff" ${S}/>
+        <path d="M150 84 C152 70 160 62 168 64 C174 66 172 76 164 82" fill="#fff" ${S}/>
+        <path d="M162 90 C168 76 178 70 184 74 C189 78 184 88 174 94" fill="#fff" ${S}/>
+        <path d="M112 84 C110 74 116 68 122 70" fill="none" ${S}/>
+        <!-- cabeza, hocico hacia arriba -->
+        <g transform="translate(86 108) rotate(-90) scale(.8) translate(-104 -110)">
+          <path d="M62 92 C47 60 60 26 98 23 C124 21 139 36 149 48 C159 58 174 55 185 62 C197 70 194 92 175 96 C152 101 133 98 119 106 C104 115 76 113 62 92 Z" fill="#fff" ${S}/>
+          <path d="M128 92 C140 99 154 98 162 91" fill="none" ${S}/>
+          <ellipse cx="187" cy="67" rx="9.5" ry="7.5" fill="${INK}"/>
+          <path d="M126 58 C129 62 133 62 136 58" fill="none" ${S}/>
+          <path d="M88 29 C66 33 51 62 54 90 C56 107 72 113 81 100 C92 84 98 56 96 36 C95 31 92 29 88 29 Z" fill="${INK}" ${S}/>
+        </g>
+      </g>
+      <g class="zz"><text x="168" y="44" font-family="Caveat, cursive" font-size="26" fill="${INK}">z</text></g>
+      <g class="zz" style="animation-delay:-2s"><text x="184" y="28" font-family="Caveat, cursive" font-size="20" fill="${INK}">z</text></g>
+    </svg>`;
+  },
+  hug() {
+    return sitting({
+      look: "look-down",
+      arm: `${heart(146, 156, 30, "beat")}
+        <path d="M122 132 C130 138 136 142 140 146" fill="none" ${S}/>${paw(143, 146)}
+        <path d="M92 136 C104 150 116 150 124 150" fill="none" ${S}/>`,
+    });
+  },
+  sign() {
+    return sitting({
+      arm: `
+        <g transform="rotate(-4 160 150)">
+          <rect x="112" y="126" width="100" height="56" rx="3" fill="#fffaf2" ${S}/>
+          ${heart(162, 154, 14, "beat")}
+        </g>
+        ${paw(118, 132)}${paw(204, 126)}`,
+    });
+  },
+  friend() {
+    return sitting({
+      look: "look-up",
+      extraFront: `${woodstock(96, 26, 1)}
+        <g class="bob" style="animation-delay:-1.2s">${heart(206, 40, 16, "beat")}</g>`,
+    });
+  },
+  envelope() {
+    return sitting({
+      look: "look-down",
+      arm: `
+        <g transform="rotate(-6 158 156)">
+          <rect x="118" y="134" width="84" height="54" rx="3" fill="#fffaf2" ${S}/>
+          <path d="M118 136 L160 166 L202 136" fill="none" ${S2}/>
+          ${heart(160, 164, 8)}
+        </g>
+        ${paw(124, 140)}${paw(196, 132)}`,
+    });
+  },
+  letterTop() { return POSES.hug(); },
+  wave() {
+    return sitting({
+      look: "look-up",
+      arm: `<path d="M124 132 C138 126 148 114 152 102" fill="none" ${S}/><g class="bob">${paw(154, 99)}</g>`,
+      extraBack: `<g class="bob" style="animation-delay:-.8s">${heart(206, 60, 14, "beat")}</g>`,
+    });
+  },
+  final() {
+    return sitting({
+      look: "look-down",
+      extraBack: `<circle class="glow" cx="120" cy="125" r="110" fill="${ROSE}" opacity=".12"/>`,
+      arm: `${heart(148, 154, 36, "beat")}
+        <path d="M122 132 C130 138 134 140 138 142" fill="none" ${S}/>${paw(140, 142)}
+        <path d="M90 138 C104 152 118 152 126 150" fill="none" ${S}/>`,
+    });
+  },
+};
+
+/* =========================================================
+   Motor de escenas
+   ========================================================= */
+const app = document.getElementById("app");
+const progress = document.getElementById("progress");
+let current = null;
+let busy = false;
+
+MESSAGES.forEach(() => progress.appendChild(document.createElement("i")));
+function setProgress(i) {
+  progress.classList.toggle("hidden", i < 0);
+  [...progress.children].forEach((d, k) => {
+    d.classList.toggle("on", k <= i);
+    d.classList.toggle("now", k === i);
+  });
+}
+
+function show(el) {
+  const prev = current;
+  if (prev) {
+    prev.classList.remove("active");
+    prev.classList.add("leaving");
+    setTimeout(() => prev.remove(), 700);
+  }
+  current = el;
+  setTimeout(() => {
+    app.appendChild(el);
+    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add("active")));
+  }, prev ? 450 : 0);
+}
+
+function words(text, startDelay = 700, step = 115) {
+  return text.split(" ").map((w, i) =>
+    `<span class="w" style="animation-delay:${startDelay + i * step}ms">${w}</span>`).join(" ");
+}
+
+function scene(html, cls = "") {
+  const s = document.createElement("section");
+  s.className = "scene " + cls;
+  s.innerHTML = html;
+  return s;
+}
+
+function revealButton(s, delay) {
+  const b = s.querySelector(".btn");
+  setTimeout(() => { b.classList.add("show"); busy = false; }, delay);
+  return b;
+}
+
+function intro() {
+  busy = true;
+  setProgress(-1);
+  const text = "Mily, tengo algo que decirte...";
+  const s = scene(`
+    <div class="stage enter-rise">${POSES.intro()}</div>
+    <p class="msg intro-msg" aria-live="polite">${words(text, 900, 170)}</p>
+    <button class="btn">Abrir mi carta ❤️</button>`);
+  show(s);
+  revealButton(s, 900 + text.split(" ").length * 170 + 1600).addEventListener("click", () => message(0));
+}
+
+const ENTERS = ["enter-walk", "enter-pop", "enter-rise"];
+function message(i) {
+  if (busy) return;
+  busy = true;
+  setProgress(i);
+  const m = MESSAGES[i];
+  const n = m.t.split(" ").length;
+  const s = scene(`
+    <div class="stage ${ENTERS[i % 3]}">${POSES[m.pose]()}</div>
+    <p class="msg" aria-live="polite">${words(m.t)}</p>
+    <button class="btn">Continuar ❤️</button>`);
+  show(s);
+  revealButton(s, 700 + n * 115 + 1100).addEventListener("click", () =>
+    i + 1 < MESSAGES.length ? message(i + 1) : envelope());
+}
+
+function envelope() {
+  if (busy) return;
+  busy = true;
+  setProgress(-1);
+  const s = scene(`
+    <div class="envelope-wrap enter-pop" id="env">
+      <div class="env-back"></div>
+      <div class="env-paper"><span>Para Mily</span></div>
+      <div class="env-front"></div>
+      <div class="env-flap"></div>
+      <svg class="env-seal" viewBox="0 0 40 40"><path d="${heartPath(20, 21, 17)}" fill="${ROSE}" ${S2}/></svg>
+    </div>
+    <div class="stage enter-walk" style="width:min(150px,38vw);margin-top:18px">${sitting({ look: "look-up" })}</div>`);
+  show(s);
+  const env = s.querySelector("#env");
+  setTimeout(() => env.classList.add("open"), 2200);
+  setTimeout(() => { busy = false; letter(); }, 4800);
+}
+
+function letter() {
+  busy = true;
+  const paras = LETTER.map(p => `<p>${p}</p>`).join("");
+  const sign = SIGN.map((p, k) => `<p class="sign${k === 0 ? " first" : ""}">${p}</p>`).join("");
+  const s = scene(`
+    <div class="letter-scroll">
+      <article class="letter">
+        <div class="top">${POSES.letterTop()}</div>
+        ${paras}${sign}
+        <div class="end">
+          <div class="mini">${POSES.wave()}</div>
+          <button class="btn">Continuar ❤️</button>
+        </div>
+      </article>
+    </div>
+    <svg class="scroll-hint" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>`, "letter-scene");
+  show(s);
+
+  const scroller = s.querySelector(".letter-scroll");
+  const hint = s.querySelector(".scroll-hint");
+  const btn = s.querySelector(".btn");
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      e.target.classList.add("seen");
+      io.unobserve(e.target);
+      if (e.target === btn) { btn.classList.add("show"); busy = false; }
+    });
+  }, { root: scroller, threshold: 0.15, rootMargin: "0px 0px -6% 0px" });
+  s.querySelectorAll(".letter p").forEach(p => io.observe(p));
+  io.observe(btn);
+  scroller.addEventListener("scroll", () => {
+    if (scroller.scrollTop > 60) hint.classList.add("gone");
+    if (scroller.scrollTop + scroller.clientHeight > scroller.scrollHeight - 40) hint.classList.add("gone");
+  }, { passive: true });
+  btn.addEventListener("click", finale);
+}
+
+function finale() {
+  if (busy) return;
+  busy = true;
+  const s = scene(`
+    <div class="stage enter-rise">${POSES.final()}</div>
+    <h1 class="final-name">Mily <span class="final-heart">❤️</span></h1>
+    <p class="final-sub">Te amo con todo mi ser.</p>`);
+  show(s);
+  heartRate = 1400;
+}
+
+document.addEventListener("keydown", e => {
+  if (!["Enter", " ", "ArrowRight"].includes(e.key)) return;
+  if (document.activeElement && document.activeElement.id === "music") return;
+  const b = current && current.querySelector(".btn.show");
+  if (b) { e.preventDefault(); b.click(); }
+});
+
+/* =========================================================
+   Corazones flotantes (ocasionales)
+   ========================================================= */
+const heartsLayer = document.getElementById("hearts");
+let heartRate = 2600;
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+function spawnHeart() {
+  if (!reduce && !document.hidden) {
+    const size = 10 + Math.random() * 14;
+    const h = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    h.setAttribute("viewBox", "0 0 40 40");
+    h.setAttribute("width", size);
+    h.setAttribute("height", size);
+    h.innerHTML = `<path d="${heartPath(20, 21, 18)}" fill="${Math.random() < .5 ? "#f1b7c3" : "#e88ea0"}"/>`;
+    h.style.left = (4 + Math.random() * 92) + "vw";
+    h.style.setProperty("--o", (.25 + Math.random() * .3).toFixed(2));
+    h.style.setProperty("--dx", ((Math.random() - .5) * 60).toFixed(0) + "px");
+    h.style.animationDuration = (11 + Math.random() * 7) + "s";
+    heartsLayer.appendChild(h);
+    h.addEventListener("animationend", () => h.remove());
+  }
+  setTimeout(spawnHeart, heartRate + Math.random() * 1800);
+}
+setTimeout(spawnHeart, 1200);
+
+/* =========================================================
+   Música: una cajita musical suave generada en el navegador
+   ========================================================= */
+const musicBtn = document.getElementById("music");
+let ctx, master, timer, playing = false, nextTime = 0, step = 0;
+const N = f => 440 * Math.pow(2, (f - 69) / 12);
+// melodía en Re mayor, compás de 3/4 (nota MIDI o null)
+const MELODY = [
+  74, 78, 81,  78, 76, 74,  79, 83, 81,  78, null, 76,
+  74, 78, 81,  83, 81, 79,  78, 76, 73,  74, null, null,
+  71, 74, 78,  76, 74, 73,  74, 78, 81,  79, 78, 76,
+  74, 76, 78,  79, 78, 76,  74, 73, 76,  74, null, null,
+];
+const BASS = [50, 55, 54, 57, 50, 55, 57, 50, 47, 45, 50, 55, 50, 55, 45, 50];
+const BEAT = 0.5;
+
+function pluck(freq, t, vol = 1, len = 2.2) {
+  const o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain();
+  o1.type = "sine"; o2.type = "sine";
+  o1.frequency.value = freq; o2.frequency.value = freq * 3.01;
+  const g2 = ctx.createGain(); g2.gain.value = 0.12;
+  o1.connect(g); o2.connect(g2); g2.connect(g); g.connect(master);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.22 * vol, t + 0.008);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+  o1.start(t); o2.start(t); o1.stop(t + len + 0.1); o2.stop(t + len + 0.1);
+}
+function schedule() {
+  while (nextTime < ctx.currentTime + 0.6) {
+    const m = MELODY[step % MELODY.length];
+    if (m) pluck(N(m), nextTime, 0.9);
+    if (step % 3 === 0) pluck(N(BASS[Math.floor(step / 3) % BASS.length]), nextTime, 0.5, 3);
+    nextTime += BEAT;
+    step++;
+  }
+}
+function startMusic() {
+  if (!ctx) {
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    master = ctx.createGain();
+    master.gain.value = 0;
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 2600;
+    const delay = ctx.createDelay(); delay.delayTime.value = BEAT * 0.75;
+    const fb = ctx.createGain(); fb.gain.value = 0.28;
+    const wet = ctx.createGain(); wet.gain.value = 0.22;
+    master.connect(lp); lp.connect(ctx.destination);
+    lp.connect(delay); delay.connect(fb); fb.connect(delay); delay.connect(wet); wet.connect(ctx.destination);
+  }
+  ctx.resume();
+  master.gain.cancelScheduledValues(ctx.currentTime);
+  master.gain.setTargetAtTime(0.32, ctx.currentTime, 0.8);
+  nextTime = ctx.currentTime + 0.1;
+  schedule();
+  timer = setInterval(schedule, 200);
+  playing = true;
+}
+function stopMusic() {
+  clearInterval(timer);
+  master.gain.setTargetAtTime(0, ctx.currentTime, 0.35);
+  playing = false;
+}
+musicBtn.addEventListener("click", () => {
+  playing ? stopMusic() : startMusic();
+  musicBtn.setAttribute("aria-pressed", String(playing));
+  musicBtn.setAttribute("aria-label", playing ? "Silenciar música" : "Activar música");
+});
+
+intro();
+</script>
+</body>
+</html>
