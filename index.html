@@ -82,6 +82,20 @@
   .music .slash { transition: opacity 200ms; }
   .music[aria-pressed="true"] .slash { opacity: 0; }
 
+  .music-hint {
+    position: fixed; z-index: 20;
+    top: calc(22px + env(safe-area-inset-top)); right: 66px;
+    margin: 0;
+    font-family: "Caveat", cursive; font-size: 1.2rem; line-height: 1.1;
+    color: var(--ink-soft);
+    max-width: 44vw; text-align: right;
+    opacity: 0; transform: translateX(6px);
+    transition: opacity 700ms var(--ease-out), transform 700ms var(--ease-out);
+    pointer-events: none;
+  }
+  .music-hint.show { opacity: 1; transform: none; }
+  .yt-holder { position: fixed; width: 1px; height: 1px; left: -10px; bottom: 0; opacity: 0; pointer-events: none; overflow: hidden; }
+
   /* ---------- progreso ---------- */
   .progress {
     position: fixed; z-index: 20;
@@ -357,6 +371,9 @@
     <path class="slash" d="M3 3l18 18"/>
   </svg>
 </button>
+
+<p class="music-hint" id="musicHint">toca <span aria-hidden="true">🎵</span> para escuchar nuestra canción</p>
+<div class="yt-holder" aria-hidden="true"><div id="yt"></div></div>
 
 <div class="progress hidden" id="progress" aria-hidden="true"></div>
 
@@ -665,6 +682,7 @@ const ENTERS = ["enter-walk", "enter-pop", "enter-rise"];
 function message(i) {
   if (busy) return;
   busy = true;
+  hideMusicHint();
   setProgress(i);
   const m = MESSAGES[i];
   const n = m.t.split(" ").length;
@@ -813,7 +831,7 @@ function schedule() {
     step++;
   }
 }
-function startMusic() {
+function startBox() {
   if (!ctx) {
     ctx = new (window.AudioContext || window.webkitAudioContext)();
     master = ctx.createGain();
@@ -831,18 +849,67 @@ function startMusic() {
   nextTime = ctx.currentTime + 0.1;
   schedule();
   timer = setInterval(schedule, 200);
-  playing = true;
 }
-function stopMusic() {
+function stopBox() {
   clearInterval(timer);
   master.gain.setTargetAtTime(0, ctx.currentTime, 0.35);
+}
+
+/* ---- La canción: "Amén – Te Quiero" (piano), sonando desde YouTube ---- */
+const SONG_ID = "Za20vZARIwI";
+let yt = null, ytReady = false, ytFailed = false, fadeTimer = null;
+window.onYouTubeIframeAPIReady = () => {
+  yt = new YT.Player("yt", {
+    width: 1, height: 1, videoId: SONG_ID,
+    playerVars: { playsinline: 1, controls: 0, disablekb: 1, rel: 0 },
+    events: {
+      onReady: () => { ytReady = true; if (playing) playSong(); },
+      onStateChange: e => { if (e.data === YT.PlayerState.ENDED && playing) { yt.seekTo(0); yt.playVideo(); } },
+      onError: () => { ytFailed = true; if (playing) startBox(); },
+    },
+  });
+};
+const ytScript = document.createElement("script");
+ytScript.src = "https://www.youtube.com/iframe_api";
+ytScript.onerror = () => { ytFailed = true; };
+document.head.appendChild(ytScript);
+
+function fadeTo(target, done) {
+  clearInterval(fadeTimer);
+  let v = yt.getVolume ? yt.getVolume() : 0;
+  fadeTimer = setInterval(() => {
+    v += Math.sign(target - v) * 4;
+    if (Math.abs(target - v) < 4) { v = target; clearInterval(fadeTimer); done && done(); }
+    yt.setVolume(v);
+  }, 60);
+}
+function playSong() {
+  yt.setVolume(0);
+  yt.playVideo();
+  fadeTo(70);
+}
+function startMusic() {
+  playing = true;
+  if (ytFailed) return startBox();
+  if (ytReady) playSong();          // si aún carga, onReady la arranca
+}
+function stopMusic() {
   playing = false;
+  if (ytFailed || !ytReady) { if (ctx) stopBox(); return; }
+  fadeTo(0, () => { if (!playing) yt.pauseVideo(); });
 }
 musicBtn.addEventListener("click", () => {
   playing ? stopMusic() : startMusic();
   musicBtn.setAttribute("aria-pressed", String(playing));
   musicBtn.setAttribute("aria-label", playing ? "Silenciar música" : "Activar música");
+  hideMusicHint();
 });
+
+/* aviso discreto junto al botón */
+const musicHint = document.getElementById("musicHint");
+function hideMusicHint() { musicHint.classList.remove("show"); }
+setTimeout(() => { if (!playing) musicHint.classList.add("show"); }, 2600);
+setTimeout(hideMusicHint, 16000);
 
 intro();
 </script>
